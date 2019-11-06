@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:  
+  PrivateSubnet1:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String    
+  PrivateSubnet2:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+  SecurityGroup:    
+    Type: String
+  DBUsername:    
+    Type: String
+  DBPassword:    
+    Type: String
+
+
+Resources:
+  DBSubnetGroup: 
+    Properties: 
+      DBSubnetGroupDescription: description
+      SubnetIds: 
+        - Ref: PrivateSubnet1
+        - Ref: PrivateSubnet2      
+    Type: "AWS::RDS::DBSubnetGroup"
+
+  RDSCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      MasterUsername: 
+        Ref: DBUsername
+      MasterUserPassword: 
+        Ref: DBPassword
+      DatabaseName: avengers
+      Engine: aurora
+      EngineMode: serverless
+      ScalingConfiguration:
+        AutoPause: true
+        MaxCapacity: 16
+        MinCapacity: 2
+        SecondsUntilAutoPause: 300
+      DBSubnetGroupName:
+        Ref: DBSubnetGroup
+
+  CreateTablesFunction:
+    Type: "AWS::Serverless::Function"
+    DependsOn: RDSCluster
+    Properties:
+      FunctionName: "crete-tables-avengers"
+      Runtime: "python3.6"
+      Timeout: 120
+      MemorySize: 256
+      Handler: "lambda_create_tables.lambda_handler"
+      CodeUri: "avengers/genesis/lambda_create_tables.py"      
+      Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      Environment:
+        Variables:          
+          RDS_HOSTNAME: !GetAtt RDSCluster.Endpoint.Address
+          RDS_PORT: "5432"
+          RDS_USERNAME: !Ref DBUsername
+          RDS_DBNAME: avengers
+          RDS_PASSWORD: !Ref DBPassword
+
+
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"      
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+Outputs:  
+  RDSCluster:
+    Value: !GetAtt RDSCluster.Endpoint.Address
+    
