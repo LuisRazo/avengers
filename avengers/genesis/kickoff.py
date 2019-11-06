@@ -1,5 +1,5 @@
 import pandas as pd
-from avengers.utils import paginator, general_clean, get_comic_creator
+from helpers.utils import paginator, general_clean, get_comic_creator
 
 
 elements_to_extract = {
@@ -36,6 +36,7 @@ elements_to_extract = {
             }
     }
 
+path = '{file_type}/{date}.p'
 
 def main():        
     url1 = "https://gateway.marvel.com:443/v1/public/{end_point}"
@@ -64,7 +65,8 @@ def main():
     df = general_clean(df)
     df = elem.get('function')(df)        
     df.drop_duplicates(subset='id', inplace=True) 
-    upsert_df_to_postgres(df=df, **elem.get('db'))
+    upload_df_S3(df, path.format(file_type='creators', date='genesis'))
+    #upsert_df_to_postgres(df=df, **elem.get('db'))
     
 
     querystring = {
@@ -91,7 +93,8 @@ def main():
     df = general_clean(df)
     df = elem.get('function')(df)        
     #save comics
-    upsert_df_to_postgres(df=df, **elem.get('db'))
+    upload_df_S3(df, path.format(file_type='comics', date='genesis'))
+    #upsert_df_to_postgres(df=df, **elem.get('db'))
     
 
     #cleansing creators-comics
@@ -101,7 +104,8 @@ def main():
         comic_id = row['id']
         comics_creators += [get_comic_creator(comic_id, item) for item in  row['creators']['items']]
     df_creators_comics = pd.DataFrame(comics_creators)
-    upsert_df_to_postgres(df=df_creators_comics, **elem.get('db'))
+    upload_df_S3(df_creators_comics, path.format(file_type='creator_comic', date='genesis'))
+    #upsert_df_to_postgres(df=df_creators_comics, **elem.get('db'))
     
 
 
@@ -123,8 +127,9 @@ def main():
     df = pd.DataFrame(data)
     df = general_clean(df)
     df = elem.get('function')(df)  
-    df.drop_duplicates(subset='id', inplace=True)       
-    upsert_df_to_postgres(df=df, **elem.get('db'))
+    df.drop_duplicates(subset='id', inplace=True) 
+    upload_df_S3(df, path.format(file_type='characters', date='genesis'))      
+    #upsert_df_to_postgres(df=df, **elem.get('db'))
     
     
     #get target avengers
@@ -141,7 +146,8 @@ def main():
     df_cap.rename(columns={'id': 'character_id'}, inplace=True)
 
     df_target = pd.concat([df_ironman, df_cap])
-    upsert_df_to_postgres(df=df_target, **elem.get('db'))
+    upload_df_S3(df_target, path.format(file_type='target_characters', date='genesis'))
+    #upsert_df_to_postgres(df=df_target, **elem.get('db'))
     
     
     #get character-comics
@@ -171,7 +177,8 @@ def main():
             comics_character.append(df)
     
     df_comic_char = pd.concat(comics_character)    
-    upsert_df_to_postgres(df=df_comic_char, **elem.get('db'))    
+    upload_df_S3(df_comic_char, path.format(file_type='comic_character', date='genesis'))
+    #upsert_df_to_postgres(df=df_comic_char, **elem.get('db'))    
 
 
 if __name__ == '__main__':

@@ -9,8 +9,7 @@ def paginator(url, params, headers):
     offset = params.get('offset')
     while count != 0:
         response = requests.request("GET", url, headers=headers, params=params)        
-        res_json = response.json()
-        print(res_json)
+        res_json = response.json()        
         results += res_json.get('data').get('results')
         count = res_json.get('data').get('count')
         print('pagination on:' + str(offset))
@@ -30,5 +29,13 @@ def get_comic_creator(comic_id, item):
     comic_creator = {'comic_id': comic_id,
                      'role': item.get('role'),
                      'creator_id': creator_id}
+    return comic_creator
 
 
+def clean_comic_creator(df_creators_comics):    
+    comics_creators = []
+    for index, row in df_creators_comics.iterrows():
+        comic_id = row['id']
+        comics_creators += [get_comic_creator(comic_id, item) for item in  row['creators']['items']]
+    df_creators_comics = pd.DataFrame(comics_creators)
+    return df_creators_comics

@@ -11,18 +11,19 @@ elements_to_db = {
     'creators': {'db': {'table_name':'creators', 'tmp_table': 'creators_tmp', 'pkeys': ['id']}}
     }
 
+path = '{file_type}/{date}.p'
 
 def lambda_handler(event, context):
     path = event['path']    
     file_type = event['file_type']
     elem_db = elements_to_db.get(file_type)
     if not elem_db:
-        raise Exception('Tipo de archvo desconocido: ' + file_type)
+        raise Exception('Unknow file type: ' + file_type)
     table_name = elem_db.get('db').get('table_name')
     tmp_table = elem_db.get('db').get('tmp_table')
     pkeys = elem_db.get('db').get('pkeys')
-    print("######GETTING PICKLE######")
-    file_ = read_pickle_from_S3(path)
+    print("######GETTING PICKLE######")    
+    file_ = read_pickle_from_S3(path.format(file_type=file_type, date=str_date))     
     print("######UPSERTING DATA######")
     upsert_df_to_postgres(df=file_, table_name=table_name,
                           tmp_table=tmp_table,
