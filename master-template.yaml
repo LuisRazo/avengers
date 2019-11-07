@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  BucketFiles:
+    Type: String
+  DBUsername:
+    Type: String
+  DBPassword:
+    Type: String
+    NoEcho: true
+  APIKey:
+    Type: String
+
+Resources:
+  VPCAvengers:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/vpc-template-export.yaml'       
+
+  LayerAvenger:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/layer-template-export.yaml'       
+  
+  DBAvengers:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/db-template-export.yaml'
+      Parameters:
+        PrivateSubnet1: !Sub ${VPCAvengers.Outputs.PrivateSubnet1}
+        PrivateSubnet2: !Sub ${VPCAvengers.Outputs.PrivateSubnet2}
+        SecurityGroup: !Sub ${VPCAvengers.Outputs.IngressSecurityGroup}
+        DBUsername: !Ref DBUsername
+        DBPassword: !Ref DBPassword        
+        LayerDependenciesArn: !Sub ${LayerAvenger.Outputs.AvengerLayer}
+
+  DynamoDBTable:
+    Type: "AWS::Serverless::SimpleTable"
+    Properties:
+      TableName: avengers-db
+      PrimaryKey:
+        Name: id
+        Type: String      
+      SSESpecification:
+        SSEEnabled: true
+
+  ETLAvengers:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/etl-template-export.yaml'
+      Parameters:
+        LayerDependenciesArn: !Sub ${LayerAvenger.Outputs.AvengerLayer}
+        BucketFiles: !Ref BucketFiles      
+        DynamoDBTable: !Ref DynamoDBTable
+        RDSHostname: !Sub ${DBAvengers.Outputs.RDSCluster}
+        RDSPort: "5432"
+        RDSUsername: !Ref DBUsername
+        RDSDBName: avengers
+        RDSPassword: !Ref DBPassword
+        APIKEY: !Ref APIKey
+        
+
+Outputs:
+  ETLAvengers:
+    Value: !Sub ${ETLAvengers.Outputs.SFETLArn}

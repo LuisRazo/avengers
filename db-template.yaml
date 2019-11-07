@@ -14,6 +14,9 @@ Parameters:
     Type: String
   DBPassword:    
     Type: String
+    NoEcho: true
+  LayerDependenciesArn:
+    Type: String
 
 
 Resources:
@@ -53,6 +56,8 @@ Resources:
       MemorySize: 256
       Handler: "lambda_create_tables.lambda_handler"
       CodeUri: "avengers/genesis/lambda_create_tables.py"      
+      Layers:
+        - !Ref LayerDependenciesArn        
       Role: !GetAtt LambdaExecutionRole.Arn
       VpcConfig:
         SecurityGroupIds:

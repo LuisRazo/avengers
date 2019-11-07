@@ -5,7 +5,7 @@ class AVException(Exception):
     pass
 
 
-def get_item_from_dynamo(uuid):
+def get_item_from_dynamo(id):
     """
     Get item from DynamoDB
     :param uuid: Identifier for the item
@@ -17,7 +17,7 @@ def get_item_from_dynamo(uuid):
     av_dynamo = environ["AV_DYNAMO"]
     table = resource('dynamodb', region_name='us-west-2').Table(av_dynamo)
     try:
-        response = table.get_item(Key={'uuid': uuid})
+        response = table.get_item(Key={'id': id})
     except:
         raise AVException('Something went bad while retrieving the item')
     item = response.get('Item')
