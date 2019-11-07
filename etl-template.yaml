@@ -538,8 +538,8 @@ Resources:
                   - !GetAtt GetComCharFunction.Arn
                   - !GetAtt GetTargetCharFunction.Arn
                   - !GetAtt UpsertDfFunction.Arn
-                  - !GetAtt RelCreatorsFunction
-                  - !GetAtt RelCharactersFunction
+                  - !GetAtt RelCreatorsFunction.Arn
+                  - !GetAtt RelCharactersFunction.Arn
 
 Outputs:
   SFETLArn:

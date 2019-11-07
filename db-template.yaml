@@ -36,8 +36,9 @@ Resources:
       MasterUserPassword: 
         Ref: DBPassword
       DatabaseName: avengers
-      Engine: aurora
+      Engine: aurora-postgresql
       EngineMode: serverless
+      EngineVersion: "10.7"
       ScalingConfiguration:
         AutoPause: true
         MaxCapacity: 16
