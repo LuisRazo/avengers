@@ -28,8 +28,8 @@ Resources:
     Properties:
       TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/db-template-export.yaml'
       Parameters:
-        PrivateSubnet1: !Sub ${VPCAvengers.Outputs.PrivateSubnet1}
-        PrivateSubnet2: !Sub ${VPCAvengers.Outputs.PrivateSubnet2}
+        PublicSubnet1: !Sub ${VPCAvengers.Outputs.PublicSubnet1}
+        PublicSubnet2: !Sub ${VPCAvengers.Outputs.PublicSubnet2}
         SecurityGroup: !Sub ${VPCAvengers.Outputs.IngressSecurityGroup}
         DBUsername: !Ref DBUsername
         DBPassword: !Ref DBPassword        
@@ -64,8 +64,8 @@ Resources:
         RDSDBName: avengers
         RDSPassword: !Ref DBPassword
         APIKEY: !Ref APIKey
-        PrivateSubnet1: !Sub ${VPCAvengers.Outputs.PrivateSubnet1}
-        PrivateSubnet2: !Sub ${VPCAvengers.Outputs.PrivateSubnet2}
+        PublicSubnet1: !Sub ${VPCAvengers.Outputs.PublicSubnet1}
+        PublicSubnet2: !Sub ${VPCAvengers.Outputs.PublicSubnet2}
         SecurityGroup: !Sub ${VPCAvengers.Outputs.IngressSecurityGroup}
         
 

@@ -43,8 +43,6 @@ CREATE TABLE target_characters(
         """)
     conn = None
     try:
-        # read the connection parameters
-        params = config()
         # connect to the PostgreSQL server
         conn = psycopg2.connect(
           host=os.environ['RDS_HOSTNAME'],
