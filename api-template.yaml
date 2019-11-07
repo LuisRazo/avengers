@@ -13,8 +13,10 @@ Resources:
   LambdaCharacters:
     Type: AWS::Serverless::Function
     Properties:
+      Timeout: 120
+      MemorySize: 256
       Handler: "characters.lambda_handler"
-      CodeUri: "avengers/functions/characters.py"
+      CodeUri: "avengers/functions/characters.py"      
       Layers:
         - !Ref LayerDependenciesArn
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -29,6 +31,8 @@ Resources:
   LambdaCreators:
     Type: AWS::Serverless::Function
     Properties:
+      Timeout: 120
+      MemorySize: 256
       Handler: "creators.lambda_handler"
       CodeUri: "avengers/functions/creators.py"
       Layers:
