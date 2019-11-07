@@ -35,15 +35,19 @@ Resources:
         DBPassword: !Ref DBPassword        
         LayerDependenciesArn: !Sub ${LayerAvenger.Outputs.AvengerLayer}
 
-  DynamoDBTable:
-    Type: "AWS::Serverless::SimpleTable"
+  DBDynamo:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      TableName: avengers-db
-      PrimaryKey:
-        Name: id
-        Type: String      
-      SSESpecification:
-        SSEEnabled: true
+      TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/dynamo-template-export.yaml'      
+
+  APIAvengers:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3-us-west-2.amazonaws.com/${BucketFiles}/templates/api-template-export.yaml'
+      Parameters:
+        LayerDependenciesArn: !Sub ${LayerAvenger.Outputs.AvengerLayer}        
+        DynamoDBTableCreators: !Sub ${DBDynamo.Outputs.DynamoCreators}        
+        DynamoDBTablePartners: !Sub ${DBDynamo.Outputs.DynamoCPartners}        
 
   ETLAvengers:
     Type: AWS::CloudFormation::Stack
@@ -52,13 +56,17 @@ Resources:
       Parameters:
         LayerDependenciesArn: !Sub ${LayerAvenger.Outputs.AvengerLayer}
         BucketFiles: !Ref BucketFiles      
-        DynamoDBTable: !Ref DynamoDBTable
+        DynamoDBTableCreators: !Sub ${DBDynamo.Outputs.DynamoCreators}        
+        DynamoDBTablePartners: !Sub ${DBDynamo.Outputs.DynamoCPartners}       
         RDSHostname: !Sub ${DBAvengers.Outputs.RDSCluster}
         RDSPort: "5432"
         RDSUsername: !Ref DBUsername
         RDSDBName: avengers
         RDSPassword: !Ref DBPassword
         APIKEY: !Ref APIKey
+        PrivateSubnet1: !Sub ${VPCAvengers.Outputs.PrivateSubnet1}
+        PrivateSubnet2: !Sub ${VPCAvengers.Outputs.PrivateSubnet2}
+        SecurityGroup: !Sub ${VPCAvengers.Outputs.IngressSecurityGroup}
         
 
 Outputs:

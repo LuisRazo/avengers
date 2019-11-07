@@ -32,10 +32,25 @@ def get_comic_creator(comic_id, item):
     return comic_creator
 
 
+def clean_role(role):
+    if role in ['Colorist', 'colorist (cover)', 'colorist']:
+        return 'colorist'
+    elif role in ['Writer', 'writer']:
+        return 'writer'
+    elif role in ['editor']:
+        return 'editor'
+    else:
+        return role
+
 def clean_comic_creator(df_creators_comics):    
     comics_creators = []
     for index, row in df_creators_comics.iterrows():
         comic_id = row['id']
         comics_creators += [get_comic_creator(comic_id, item) for item in  row['creators']['items']]
-    df_creators_comics = pd.DataFrame(comics_creators)
+    df_creators_comics = pd.DataFrame(comics_creators)    
+    df['role'] = df.role.map(clean_role)
     return df_creators_comics
+
+def clean_creators(df):
+    df.rename(columns={'fullName': 'full_name'}, inplace=True)
+    return df

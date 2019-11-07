@@ -8,22 +8,19 @@ def create_tables():
 CREATE TABLE comics(
     id INT PRIMARY KEY,
     title TEXT,
-    modified TIMESTAMP,
-    created TIMESTAMP
+    modified TIMESTAMP
 );
 
 CREATE TABLE characters(
     id INT PRIMARY KEY,
     name TEXT,
-    modified TIMESTAMP,
-    created TIMESTAMP
+    modified TIMESTAMP
 );
 
 CREATE TABLE creators(
     id INT PRIMARY KEY,
     full_name TEXT,
-    modified TIMESTAMP,
-    created TIMESTAMP
+    modified TIMESTAMP
 );
 
 CREATE TABLE character_comic(
@@ -71,4 +68,4 @@ CREATE TABLE target_characters(
             conn.close()
 
 def lambda_handler(event, context):
-    print(event)
+    create_tables()

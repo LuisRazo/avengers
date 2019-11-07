@@ -1,5 +1,5 @@
 from helpers.helpers import upload_df_S3, read_pickle_from_S3
-from helpers.utils import clean_comic_creator
+from helpers.utils import clean_comic_creator, clean_creators
 
 elements_to_extract = {
         'characters': 
@@ -24,7 +24,7 @@ elements_to_extract = {
             },
         'creators': 
             {
-            'function':lambda x: x
+            'function':lambda x: clean_creators(x)
             }
     }
 

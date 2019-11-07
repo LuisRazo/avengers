@@ -5,7 +5,7 @@ class AVException(Exception):
     pass
 
 
-def get_item_from_dynamo(id):
+def get_item_from_dynamo(id, av_dynamo):
     """
     Get item from DynamoDB
     :param uuid: Identifier for the item
@@ -13,8 +13,7 @@ def get_item_from_dynamo(id):
     """
     from os import environ
     from boto3 import resource
-
-    av_dynamo = environ["AV_DYNAMO"]
+    
     table = resource('dynamodb', region_name='us-west-2').Table(av_dynamo)
     try:
         response = table.get_item(Key={'id': id})
@@ -26,15 +25,14 @@ def get_item_from_dynamo(id):
     return item
 
 
-def put_item_dynamo(item):
+def put_item_dynamo(item, av_dynamo):
     """
     Put item into DynamoDB
     :param item: dict to insert in dynamodb
     """
     from os import environ
     from boto3 import resource
-
-    av_dynamo = environ["AV_DYNAMO"]
+    
     table = resource('dynamodb', region_name='us-west-2').Table(av_dynamo)
     table.put_item(Item=item)
 

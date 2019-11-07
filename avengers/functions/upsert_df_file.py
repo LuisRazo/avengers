@@ -13,9 +13,10 @@ elements_to_db = {
 
 path = '{file_type}/{date}.p'
 
-def lambda_handler(event, context):
-    path = event['path']    
+def lambda_handler(event, context):    
     file_type = event['file_type']
+    str_date = event['str_date']
+    path = path.format(file_type=file_type, date=str_date)
     elem_db = elements_to_db.get(file_type)
     if not elem_db:
         raise Exception('Unknow file type: ' + file_type)

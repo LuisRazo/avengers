@@ -75,4 +75,6 @@ def lambda_handler(event, context):
     df['modified'] = dt_date        
     print("###UPLOADING FILE TO S3###")
     upload_df_S3(df, path.format(file_type=file_type, date=str_date))
+    event['str_date'] = str_date
+    return event
 

@@ -1,0 +1,547 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "Template for Lambda state machine."
+
+Parameters:
+  LayerDependenciesArn:
+    Type: String  
+  BucketFiles:
+    Type: String  
+  DynamoDBTableCreators:
+    Type: String
+  DynamoDBTablePartners:
+    Type: String
+  RDSHostname:
+    Type: String
+  RDSPort:
+    Type: String
+  RDSUsername:
+    Type: String
+  RDSDBName:
+    Type: String
+  RDSPassword:
+    Type: String
+    NoEcho: true
+  APIKEY:
+    Type: String 
+  SecurityGroup:
+    Type: String 
+  PrivateSubnet1:
+    Type: String
+  PrivateSubnet2:
+    Type: String
+
+
+Globals:
+  Function:
+    Runtime: "python3.6"
+
+Resources:
+  ExtractorFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "extractor.lambda_handler"
+      CodeUri: "avengers/functions/extractor.py"
+      Layers:
+        - !Ref LayerDependenciesArn                
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles
+          APIKEY: !Ref APIKEY
+
+  CleanserFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "cleanser.lambda_handler"
+      CodeUri: "avengers/functions/cleanser.py"
+      Layers:
+        - !Ref LayerDependenciesArn        
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles
+
+  SplitComCreFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "split_comics_creators.lambda_handler"
+      CodeUri: "avengers/functions/split_comics_creators.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles
+
+  GetComCharFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "get_comic_characters.lambda_handler"
+      CodeUri: "avengers/functions/get_comic_characters.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles
+          APIKEY: !Ref APIKEY
+
+  GetTargetCharFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "get_target_characters.lambda_handler"
+      CodeUri: "avengers/functions/get_target_characters.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles          
+
+  UpsertDfFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      FunctionName: "upsertDfPostgres"
+      Timeout: 120
+      MemorySize: 256
+      Handler: "upsert_df_file.lambda_handler"
+      CodeUri: "avengers/functions/upsert_df_file.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles
+          RDS_HOSTNAME: !Ref RDSHostname
+          RDS_PORT: !Ref RDSPort
+          RDS_USERNAME: !Ref RDSUsername
+          RDS_DBNAME: !Ref RDSDBName
+          RDS_PASSWORD: !Ref RDSPassword
+
+  RelCreatorsFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "calculate_relation_creators.lambda_handler"
+      CodeUri: "avengers/functions/calculate_relation_creators.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles          
+          RDS_HOSTNAME: !Ref RDSHostname
+          RDS_PORT: !Ref RDSPort
+          RDS_USERNAME: !Ref RDSUsername
+          RDS_DBNAME: !Ref RDSDBName
+          RDS_PASSWORD: !Ref RDSPassword          
+
+  RelCharactersFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Timeout: 120
+      MemorySize: 256
+      Handler: "calculate_relation_partners.lambda_handler"
+      CodeUri: "avengers/functions/calculate_relation_partners.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      Environment:
+        Variables:
+          BUCKET_FILES: !Ref BucketFiles          
+          RDS_HOSTNAME: !Ref RDSHostname
+          RDS_PORT: !Ref RDSPort
+          RDS_USERNAME: !Ref RDSUsername
+          RDS_DBNAME: !Ref RDSDBName
+          RDS_PASSWORD: !Ref RDSPassword          
+
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      ScheduleExpression: "cron(0 0 * * ? *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: !Ref Pipeline            
+          Id: "SFPipeline"
+          RoleArn: !GetAtt EventRole.Arn
+
+
+  Pipeline:
+    Type: "AWS::StepFunctions::StateMachine"
+    Properties:
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "StartAt": "parallelExtract",
+              "States": {
+                  "parallelExtract": {
+                      "Type": "Parallel",                      
+                      "ResultPath": "$.processing",
+                      "Next": "calculateParallel",                        
+                      "Branches": [
+                          {
+                              "StartAt": "extractCreator",
+                              "States": {
+                                      "extractCreator": {
+                                          "Parameters": {                                    
+                                          "file_type": "creator",
+                                          "time.$": "$.time"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${extractorFunction}",
+                                          "Next": "cleanCreator"
+                                      },
+                                      "cleanCreator": {
+                                          "Parameters": {                                    
+                                          "file_type": "creator",
+                                          "str_date.$": "$.str_date"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${cleanserFunction}",
+                                          "Next": "saveCreator"
+                                      },
+                                      "saveCreator": {
+                                          "Parameters": {                                    
+                                          "file_type": "creator",
+                                          "str_date.$": "$.str_date"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${upsertDfFunction}",
+                                          "End": true
+                                      }
+                                      }
+                          },
+                          {
+                              "StartAt": "extractComics",
+                              "States": {
+                                      "extractComics": {
+                                          "Parameters": {                                    
+                                          "file_type": "comics",
+                                          "time.$": "$.time"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${extractorFunction}",
+                                          "Next": "splitComicsCreators"
+                                      },
+                                      "splitComicsCreators": {
+                                          "Parameters": {                                    
+                                          "file_type": "comics",
+                                          "str_date.$": "$.str_date"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${splitComCreFunction}",
+                                          "Next": "parallelCleanComic"
+                                      },
+                                      "parallelCleanComic": {
+                                          "Type": "Parallel",                      
+                                          "End": true,                
+                                          "Branches": [
+                                              {
+                                                  "StartAt": "cleanComics",
+                                                  "States": {
+                                                          "cleanComics": {
+                                                              "Parameters": {                                    
+                                                              "file_type": "comics",
+                                                              "str_date.$": "$.str_date"
+                                                              },
+                                                              "Type": "Task",
+                                                              "Resource": "${cleanserFunction}",
+                                                              "Next": "saveComics"                           
+                                                          },
+                                                          "saveComics": {
+                                                              "Parameters": {                                    
+                                                              "file_type": "comics",
+                                                              "str_date.$": "$.str_date"
+                                                              },
+                                                              "Type": "Task",
+                                                              "Resource": "${upsertDfFunction}",
+                                                              "End": true
+                                                          }
+                                                      }
+                                                  },
+                                                  {
+                                                      "StartAt": "cleanCreatorComics",
+                                                      "States": {
+                                                              "cleanCreatorComics": {
+                                                                  "Parameters": {                                    
+                                                                  "file_type": "creator_comic",
+                                                                  "str_date.$": "$.str_date"
+                                                                  },
+                                                                  "Type": "Task",
+                                                                  "Resource": "${cleanserFunction}",
+                                                                  "Next": "saveCreatorComics"
+                                                              },
+                                                              "saveCreatorComics": {
+                                                                  "Parameters": {                                    
+                                                                  "file_type": "creator_comic",
+                                                                  "str_date.$": "$.str_date"
+                                                                  },
+                                                                  "Type": "Task",
+                                                                  "Resource": "${upsertDfFunction}",
+                                                                  "End": true
+                                                              }
+                                                          }
+                                                      }
+                                  ]
+                                  }
+                                      }
+                          },
+                          {
+                              "StartAt": "extractCharacters",
+                              "States": {
+                                      "extractCharacters": {
+                                          "Parameters": {                                    
+                                          "file_type": "characters",
+                                          "time.$": "$.time"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${extractorFunction}",
+                                          "Next": "cleanCharacters"
+                                      },
+                                      "cleanCharacters": {
+                                          "Parameters": {                                    
+                                          "file_type": "characters",
+                                          "str_date.$": "$.str_date"
+                                          },
+                                          "Type": "Task",
+                                          "Resource": "${cleanserFunction}",
+                                          "Next": "parallelCleanCharacters"
+                                      },
+                                      "parallelCleanCharacters": {
+                                          "Type": "Parallel",                      
+                                          "End": true,                
+                                          "Branches": [
+                                              {
+                                                  "StartAt": "saveCharacters",
+                                                  "States": {                                
+                                                          "saveCharacters": {
+                                                              "Parameters": {                                    
+                                                              "file_type": "characters",
+                                                              "str_date.$": "$.str_date"
+                                                              },
+                                                              "Type": "Task",
+                                                              "Resource": "${upsertDfFunction}",
+                                                              "End": true
+                                                          }
+                                                      }
+                                                  },
+                                              {
+                                                  "StartAt": "extractCharactersComics",
+                                                  "States": {
+                                                      "extractCharactersComics": {
+                                                          "Parameters": {                                    
+                                                          "file_type": "characters",
+                                                          "str_date.$": "$.str_date"
+                                                          },
+                                                          "Type": "Task",
+                                                          "Resource": "${getComCharFunction}",
+                                                          "Next": "cleanCharactersComics"                           
+                                                      },
+                                                          "cleanCharactersComics": {
+                                                              "Parameters": {                                    
+                                                              "file_type": "comic_character",
+                                                              "str_date.$": "$.str_date"
+                                                              },
+                                                              "Type": "Task",
+                                                              "Resource": "${cleanserFunction}",
+                                                              "Next": "saveCharactersComics"                           
+                                                          },
+                                                          "saveCharactersComics": {
+                                                              "Parameters": {                                    
+                                                              "file_type": "comic_character",
+                                                              "str_date.$": "$.str_date"
+                                                              },
+                                                              "Type": "Task",
+                                                              "Resource": "${upsertDfFunction}",
+                                                              "End": true
+                                                          }
+                                                      }
+                                                  },
+                                                  {
+                                                      "StartAt": "extractTargetCharacters",
+                                                      "States": {
+                                                          "extractTargetCharacters": {
+                                                              "Parameters": {                                    
+                                                              "file_type": "characters",
+                                                              "str_date.$": "$.str_date"
+                                                              },
+                                                              "Type": "Task",
+                                                              "Resource": "${getTargetCharFunction}",
+                                                              "Next": "cleanTargetCharacters"                           
+                                                          },
+                                                              "cleanTargetCharacters": {
+                                                                  "Parameters": {                                    
+                                                                  "file_type": "target_characters",
+                                                                  "str_date.$": "$.str_date"
+                                                                  },
+                                                                  "Type": "Task",
+                                                                  "Resource": "${cleanserFunction}",
+                                                                  "Next": "saveTargetCharacters"                           
+                                                              },
+                                                              "saveTargetCharacters": {
+                                                                  "Parameters": {                                    
+                                                                  "file_type": "target_characters",
+                                                                  "str_date.$": "$.str_date"
+                                                                  },
+                                                                  "Type": "Task",
+                                                                  "Resource": "${upsertDfFunction}",
+                                                                  "End": true
+                                                              }
+                                                          }
+                                                      }
+                                  ]
+                                  }
+                                      }
+                          }
+                      ]
+                  },
+                  "calculateParallel": {
+                      "Type": "Parallel",                      
+                      "End": true,                
+                      "Branches": [
+                          {
+                              "StartAt": "calculateRelCreators",
+                              "States": {                                
+                                      "calculateRelCreators": {                                    
+                                          "Type": "Task",
+                                          "Resource": "${relCreatorsFunction}",
+                                          "End": true
+                                      }
+                                  }
+                              },
+                              {
+                                  "StartAt": "calculateRelPartners",
+                                  "States": {                                    
+                                          "calculateRelPartners": {                                        
+                                              "Type": "Task",
+                                              "Resource": "${relCharactersFunction}",
+                                              "End": true
+                                          }
+                                      }
+                                  }
+              ]
+              }
+              }
+            }
+          - {
+              extractorFunction: !GetAtt ExtractorFunction.Arn,
+              cleanserFunction: !GetAtt CleanserFunction.Arn,
+              splitComCreFunction: !GetAtt SplitComCreFunction.Arn,
+              getComCharFunction: !GetAtt GetComCharFunction.Arn,
+              getTargetCharFunction: !GetAtt GetTargetCharFunction.Arn,
+              relCreatorsFunction: !GetAtt RelCreatorsFunction.Arn,
+              relCharactersFunction: !GetAtt RelCharactersFunction.Arn,
+              upsertDfFunction: !GetAtt UpsertDfFunction.Arn
+            }
+      RoleArn: !GetAtt StatesExecutionRole.Arn
+
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:GetItem"                  
+                Resource: "*"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+  EventRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "*"                  
+                Resource: "*"      
+
+  StatesExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource:
+                  - !GetAtt ExtractorFunction.Arn
+                  - !GetAtt CleanserFunction.Arn
+                  - !GetAtt SplitComCreFunction.Arn
+                  - !GetAtt GetComCharFunction.Arn
+                  - !GetAtt GetTargetCharFunction.Arn
+                  - !GetAtt UpsertDfFunction.Arn
+                  - !GetAtt RelCreatorsFunction
+                  - !GetAtt RelCharactersFunction
+
+Outputs:
+  SFETLArn:
+    Value: !Ref Pipeline
+    Description: State Machine Arn

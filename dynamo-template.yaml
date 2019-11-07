@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  DynamoDBTableCreators:
+    Type: "AWS::Serverless::SimpleTable"
+    Properties:
+      TableName: creators-avengers-db
+      PrimaryKey:
+        Name: id
+        Type: String      
+      SSESpecification:
+        SSEEnabled: true
+
+  DynamoDBTablePartners:
+    Type: "AWS::Serverless::SimpleTable"
+    Properties:
+      TableName: partners-avengers-db
+      PrimaryKey:
+        Name: id
+        Type: String      
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  DynamoCreators:
+    Value: !Ref DynamoDBTableCreators
+    Description: Dynamo creators db
+  DynamoCPartners:
+    Value: !Ref DynamoDBTablePartners
+    Description: Dynamo Partners db

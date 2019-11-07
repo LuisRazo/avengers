@@ -1,5 +1,6 @@
 import pandas as pd
-from helpers.utils import paginator, general_clean, get_comic_creator
+from helpers.utils import paginator, general_clean, get_comic_creator, clean_role
+import os
 
 
 elements_to_extract = {
@@ -39,6 +40,7 @@ elements_to_extract = {
 path = '{file_type}/{date}.p'
 
 def main():        
+    APIKEY = os.environ['APIKEY']
     url1 = "https://gateway.marvel.com:443/v1/public/{end_point}"
     headers = {
     'Accept': "application/json",
@@ -47,7 +49,7 @@ def main():
     }
     print(url1)
     querystring = {
-            "apikey":"87a1c6ea5695c46726e54f9cf71322e3",
+            "apikey":APIKEY,
             "limit":100,
             "offset": 0,
             "orderBy": "-modified"
@@ -65,12 +67,12 @@ def main():
     df = general_clean(df)
     df = elem.get('function')(df)        
     df.drop_duplicates(subset='id', inplace=True) 
-    upload_df_S3(df, path.format(file_type='creators', date='genesis'))
-    #upsert_df_to_postgres(df=df, **elem.get('db'))
-    
+    df.rename(columns={'fullName': 'full_name'}, inplace=True)
+    df.to_pickle('creators.p')
+   
 
     querystring = {
-            "apikey":"87a1c6ea5695c46726e54f9cf71322e3",
+            "apikey":APIKEY,
             "limit":100,
             "offset": 0,
             "orderBy": "-modified"
@@ -93,9 +95,7 @@ def main():
     df = general_clean(df)
     df = elem.get('function')(df)        
     #save comics
-    upload_df_S3(df, path.format(file_type='comics', date='genesis'))
-    #upsert_df_to_postgres(df=df, **elem.get('db'))
-    
+    df.to_pickle('comics.p')
 
     #cleansing creators-comics
     elem = elements_to_extract.get('creator_comic')
@@ -104,13 +104,11 @@ def main():
         comic_id = row['id']
         comics_creators += [get_comic_creator(comic_id, item) for item in  row['creators']['items']]
     df_creators_comics = pd.DataFrame(comics_creators)
-    upload_df_S3(df_creators_comics, path.format(file_type='creator_comic', date='genesis'))
-    #upsert_df_to_postgres(df=df_creators_comics, **elem.get('db'))
-    
-
+    df['role'] = df.role.map(clean_role)
+    df_creators_comics.to_pickle('creator_comic.p')
 
     querystring = {
-            "apikey":"87a1c6ea5695c46726e54f9cf71322e3",
+            "apikey":APIKEY,
             "limit":100,
             "offset": 0,
             "orderBy": "-modified"
@@ -128,9 +126,8 @@ def main():
     df = general_clean(df)
     df = elem.get('function')(df)  
     df.drop_duplicates(subset='id', inplace=True) 
-    upload_df_S3(df, path.format(file_type='characters', date='genesis'))      
-    #upsert_df_to_postgres(df=df, **elem.get('db'))
-    
+    df.to_pickle('characters.p')
+        
     
     #get target avengers
     elem = elements_to_extract.get('target_characters')
@@ -141,13 +138,12 @@ def main():
     df_ironman.rename(columns={'id': 'character_id'}, inplace=True)
 
     df_cap = df[df.name.str.contains('^cap.*?ame', case=False)]
-    df_cap['name'] = 'ironman'
+    df_cap['name'] = 'capamerica'
     df_cap = df_cap[['name', 'id']]
     df_cap.rename(columns={'id': 'character_id'}, inplace=True)
 
     df_target = pd.concat([df_ironman, df_cap])
-    upload_df_S3(df_target, path.format(file_type='target_characters', date='genesis'))
-    #upsert_df_to_postgres(df=df_target, **elem.get('db'))
+    df_target.to_pickle('target_characters.p')
     
     
     #get character-comics
@@ -157,7 +153,7 @@ def main():
     comics_character = []
     for character_id in df.id:
         querystring = {
-        "apikey":"87a1c6ea5695c46726e54f9cf71322e3",
+        "apikey":APIKEY,
         "limit":100,
         "offset": 0,
         "orderBy": "-modified"
@@ -177,8 +173,7 @@ def main():
             comics_character.append(df)
     
     df_comic_char = pd.concat(comics_character)    
-    upload_df_S3(df_comic_char, path.format(file_type='comic_character', date='genesis'))
-    #upsert_df_to_postgres(df=df_comic_char, **elem.get('db'))    
+    df_comic_char.to_pickle('comic_character.p')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  LayerDependenciesArn:
+    Type: String    
+  DynamoDBTableCreators:
+    Type: String
+  DynamoDBTablePartners:
+    Type: String
+
+Resources:
+  LambdaCharacters:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: "characters.lambda_handler"
+      CodeUri: "avengers/functions/characters.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.6      
+      Events:  
+        GetCreators:      
+          Type: Api
+          Properties:
+            Path: '/marvel/characters/{id}'
+            Method: get
+  
+  LambdaCreators:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: "creators.lambda_handler"
+      CodeUri: "avengers/functions/creators.py"
+      Layers:
+        - !Ref LayerDependenciesArn
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python3.6      
+      Events:  
+        GetCreators:      
+          Type: Api
+          Properties:
+            Path: '/marvel/colaborators/{id}'
+            Method: get
+
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:PutItem"
+                  - "dynamodb:GetItem"                  
+                Resource: "*"
+                         
+
+Outputs:
+  LambdaChar:
+    Value: !Ref LambdaCharacters
+    Description: LAmbda characters
+  LambdaCrea:
+    Value: !Ref LambdaCreators
+    Description: LAmbda creators
