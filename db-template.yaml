@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:  
-  PrivateSubnet1:
+  PublicSubnet1:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String    
-  PrivateSubnet2:
+  PublicSubnet2:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
   SecurityGroup:    
@@ -24,8 +24,8 @@ Resources:
     Properties: 
       DBSubnetGroupDescription: description
       SubnetIds: 
-        - Ref: PrivateSubnet1
-        - Ref: PrivateSubnet2      
+        - Ref: PublicSubnet1
+        - Ref: PublicSubnet2      
     Type: "AWS::RDS::DBSubnetGroup"
 
   RDSCluster:
@@ -64,8 +64,8 @@ Resources:
         SecurityGroupIds:
           - !Ref SecurityGroup
         SubnetIds:
-          - !Ref PrivateSubnet1
-          - !Ref PrivateSubnet2
+          - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
       Environment:
         Variables:          
           RDS_HOSTNAME: !GetAtt RDSCluster.Endpoint.Address
