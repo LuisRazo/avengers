@@ -178,6 +178,10 @@ Resources:
     Properties:
       GroupName: "ingress-sg"
       GroupDescription: "Security group"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '5432'
+        ToPort: '5432'
       VpcId: !Ref VPC
 
 Outputs:

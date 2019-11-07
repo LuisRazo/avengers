@@ -11,9 +11,8 @@ elements_to_db = {
     'creators': {'db': {'table_name':'creators', 'tmp_table': 'creators_tmp', 'pkeys': ['id']}}
     }
 
-path = '{file_type}/{date}.p'
-
 def lambda_handler(event, context):    
+    path = '{file_type}/{date}.p'
     file_type = event['file_type']
     str_date = event['str_date']
     path = path.format(file_type=file_type, date=str_date)
