@@ -6,7 +6,7 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:  
       LayerName: AvengerLayer
-      ContentUri: 'python/'
+      ContentUri: 'helpers/'
       CompatibleRuntimes:    
         - python3.6  
       RetentionPolicy: Delete
