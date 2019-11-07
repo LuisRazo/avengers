@@ -22,7 +22,7 @@ WHERE
 GROUP BY cr.name
 '''
     for aven in target_avengers:        
-        partners = get_data(query.format(id=aven))
+        df = get_data(query.format(id=aven))
         char_com = df.to_dict(orient='records')
         str_now = datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         response = {'last_sync': str_now,
