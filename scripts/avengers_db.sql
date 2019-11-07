@@ -30,6 +30,7 @@ CREATE TABLE creator_comic(
 );
 
 CREATE TABLE target_characters(
-    name TEXT PRIMARY KEY,
-    character_id INT REFERENCES characters(id)
+    name TEXT,
+    character_id INT REFERENCES characters(id),
+    PRIMARY KEY (name,character_id)
 );
