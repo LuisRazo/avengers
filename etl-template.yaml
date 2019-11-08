@@ -35,13 +35,13 @@ Parameters:
 Globals:
   Function:
     Runtime: "python3.6"
+    Timeout: 300
+    MemorySize: 512
 
 Resources:
   ExtractorFunction:
     Type: "AWS::Serverless::Function"
-    Properties:
-      Timeout: 120
-      MemorySize: 256
+    Properties:      
       Handler: "extractor.lambda_handler"
       CodeUri: "avengers/functions/extractor.py"
       Layers:
@@ -55,8 +55,6 @@ Resources:
   CleanserFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      Timeout: 120
-      MemorySize: 256
       Handler: "cleanser.lambda_handler"
       CodeUri: "avengers/functions/cleanser.py"
       Layers:
@@ -69,8 +67,6 @@ Resources:
   SplitComCreFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      Timeout: 120
-      MemorySize: 256
       Handler: "split_comics_creators.lambda_handler"
       CodeUri: "avengers/functions/split_comics_creators.py"
       Layers:
@@ -83,8 +79,6 @@ Resources:
   GetComCharFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      Timeout: 120
-      MemorySize: 256
       Handler: "get_comic_characters.lambda_handler"
       CodeUri: "avengers/functions/get_comic_characters.py"
       Layers:
@@ -98,8 +92,6 @@ Resources:
   GetTargetCharFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      Timeout: 120
-      MemorySize: 256
       Handler: "get_target_characters.lambda_handler"
       CodeUri: "avengers/functions/get_target_characters.py"
       Layers:
@@ -112,9 +104,7 @@ Resources:
   UpsertDfFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      FunctionName: "upsertDfPostgres"
-      Timeout: 120
-      MemorySize: 256
+      FunctionName: "upsertDfPostgres"      
       Handler: "upsert_df_file.lambda_handler"
       CodeUri: "avengers/functions/upsert_df_file.py"
       Layers:
@@ -138,8 +128,6 @@ Resources:
   RelCreatorsFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      Timeout: 120
-      MemorySize: 256
       Handler: "calculate_relation_creators.lambda_handler"
       CodeUri: "avengers/functions/calculate_relation_creators.py"
       Layers:
@@ -163,8 +151,6 @@ Resources:
   RelCharactersFunction:
     Type: "AWS::Serverless::Function"
     Properties:
-      Timeout: 120
-      MemorySize: 256
       Handler: "calculate_relation_partners.lambda_handler"
       CodeUri: "avengers/functions/calculate_relation_partners.py"
       Layers:
