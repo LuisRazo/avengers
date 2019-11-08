@@ -18,12 +18,9 @@ El diagrama ETL para la sicronización diaria es el siguiente
 # Requisitos minimos
 Para poder ejecutar el proyecto es necesario tener una cuenta en aws con los suficientes privilegios, crear un apikey en https://developer.marvel.com/, tener instalado awscli, python3 y virtualenv.
 
-De permisos de ejecución al script avenger-assemble.sh
-
-```chmod +x avenger-assemble.sh```
 
 ejecute el comando 
 
-```./avenger-assemble.sh```
+```./avenger-assemble.sh -u DBUSER -p DBPASS -a APIKEY```
 
 Esto creara un stack y varios nested stacks en aws. Puede revisar el status de el proceso en la consola de aws.
