@@ -21,7 +21,7 @@ then
 fi
 
 echo "creating bucket"
-# aws cloudformation deploy --template-file bucket-template.yaml --stack-name s3-bucket-avengers
+aws cloudformation deploy --template-file bucket-template.yaml --stack-name s3-bucket-avengers
 bucket_name=$(aws cloudformation describe-stacks --stack-name s3-bucket-avengers --query 'Stacks[0].Outputs[0].OutputValue' --output text)
 echo "creating the lambda layer"
 mkdir -p helpers/python
@@ -74,14 +74,14 @@ aws lambda invoke --function-name crete-tables-avengers --payload '{}' response.
 cd avengers
 echo "kickoff"
 export APIKEY
-#python ./genesis/kickoff.py
+python ./genesis/kickoff.py
 
-# aws s3 cp creators.p s3://${bucket_name}/creators/genesis.p
-# aws s3 cp comics.p s3://${bucket_name}/comics/genesis.p
-# aws s3 cp creator_comic.p s3://${bucket_name}/creator_comic/genesis.p
-# aws s3 cp characters.p s3://${bucket_name}/characters/genesis.p
-# aws s3 cp target_characters.p s3://${bucket_name}/target_characters/genesis.p
-# aws s3 cp comic_character.p s3://${bucket_name}/comic_character/genesis.p
+aws s3 cp creators.p s3://${bucket_name}/creators/genesis.p
+aws s3 cp comics.p s3://${bucket_name}/comics/genesis.p
+aws s3 cp creator_comic.p s3://${bucket_name}/creator_comic/genesis.p
+aws s3 cp characters.p s3://${bucket_name}/characters/genesis.p
+aws s3 cp target_characters.p s3://${bucket_name}/target_characters/genesis.p
+aws s3 cp comic_character.p s3://${bucket_name}/comic_character/genesis.p
 
 echo "populating db"
 aws lambda invoke --function-name upsertDfPostgres --payload '{"file_type":"creators", "str_date": "genesis"}' response.json
